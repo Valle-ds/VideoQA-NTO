@@ -41,6 +41,7 @@ class BLIP_VQA(nn.Module):
         decoder_config.num_attention_heads = 12
         decoder_config.num_hidden_layers = 12
         decoder_config.max_position_embeddings = 512
+        decoder_config.is_decoder = True
         decoder_config.add_cross_attention = True
 
         self.text_decoder = BertLMHeadModel(config=decoder_config)          
