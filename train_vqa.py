@@ -92,7 +92,7 @@ def main(args, config):
         samplers = [None, None]
     
     train_loader, test_loader = create_loader(datasets,samplers,
-                                              batch_size=[config['batch_size_train'],config['batch_size_test']],
+                                              batch_size=[args.batch_size_train,args.batch_size_test],
                                               num_workers=[4,4],is_trains=[True, False], 
                                               collate_fns=[vqa_collate_fn,None]) 
     #### Model #### 
@@ -119,7 +119,7 @@ def main(args, config):
             if args.distributed:
                 train_loader.sampler.set_epoch(epoch)
                 
-            cosine_lr_schedule(optimizer, epoch, config['max_epoch'], config['init_lr'], config['min_lr'])
+            cosine_lr_schedule(optimizer, epoch, args.max_epoch, config['init_lr'], config['min_lr'])
                 
             train_stats = train(model, train_loader, optimizer, epoch, device) 
 
@@ -167,7 +167,9 @@ if __name__ == '__main__':
     parser.add_argument('--pretrained', default=True, type=bool)
     parser.add_argument('--num_retries', default=1, type=int)
     parser.add_argument('--med_config', default='sberbank-ai/ruBert-base', type=str)
-
+    parser.add_argument('--max_epoch', default=5, type=int)
+    parser.add_argument('--batch_size_train', default=8, type=int)
+    parser.add_argument('--batch_size_test', default=8, type=int)
     parser.add_argument('--filenames',nargs='+',  type=list,)
     args = parser.parse_args()
 
