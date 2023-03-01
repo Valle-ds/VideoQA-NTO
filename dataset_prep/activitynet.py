@@ -210,14 +210,6 @@ class Activitynetqa(torch.utils.data.Dataset):
             self._question = self._question *2
             self._spatial_temporal_idx.append(idx)
 
-        self.answer_weight = {}
-        for answer in self._labels:
-            if answer in self.answer_weight.keys():
-                self.answer_weight[answer] += 1/len(self._labels)
-            else:
-                self.answer_weight[answer] = 1/len(self._labels)
-
-
 
 
         assert (
@@ -310,8 +302,15 @@ class Activitynetqa(torch.utils.data.Dataset):
 
         label = self._labels[index]
         question = self._question[index]
-        weight = [self.answer_weight[label]]
-        return frames, question, label, weight
+        
+#         answer_weight = {}
+#         for answer in [label]:
+#             if answer in answer_weight.keys():
+#                 self.answer_weight[answer] += 1/len(self._labels)
+#             else:
+#                 self.answer_weight[answer] = 1/len(self._labels)
+#         self.weights  = list(self.answer_weight.values())
+        return frames, question, label, [1]
     
     def _aug_frame(
         self,
