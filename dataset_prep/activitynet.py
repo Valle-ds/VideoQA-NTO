@@ -81,8 +81,6 @@ def decode(
     num_frames,
     clip_idx=-1,
     num_clips=10,
-    video_meta=None,
-    target_fps=30,
     backend="pyav",
     max_spatial_scale=0,
     use_offset=False,
@@ -206,11 +204,12 @@ class Activitynetqa(torch.utils.data.Dataset):
         self._path_to_videos = df['video_name'].to_list()
         self._labels = df['answer'].to_list()
         self._question = df['question'].to_list()
-
+        self._spatial_temporal_idx = [0]
         for idx in range(self._num_retries - 1):
             self._path_to_videos = self._path_to_videos *2
             self._labels = self._labels *2
             self._question = self._question *2
+            self._spatial_temporal_idx.append(idx)
 
         answer_weight = {}
         for answer in self._labels:
@@ -280,7 +279,7 @@ class Activitynetqa(torch.utils.data.Dataset):
             video_container = None
             try:
                 video_container = get_video_container(
-                    self._path_to_videos[index],
+                    self._path_to_videos[index] + '.mp4',
                     'decord',
                 )
             except Exception as e:
@@ -299,8 +298,6 @@ class Activitynetqa(torch.utils.data.Dataset):
                 8,
                 temporal_sample_index,
                 1,
-                video_meta=self._video_meta[index],
-                target_fps=30,
                 backend='decord',
                 max_spatial_scale=min_scale,
                 use_offset=True,
@@ -327,7 +324,7 @@ class Activitynetqa(torch.utils.data.Dataset):
 
             label = self._labels[index]
             question = self._question[index]
-            weight = self.weights[label]
+            weight = self.weights[index]
             frames = utils.pack_pathway_output( frames)
             return frames, question, label, weight
         else:
