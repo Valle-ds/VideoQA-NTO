@@ -9,9 +9,9 @@ def vqa_collate_fn(batch):
         image_list.append(image)
         question_list.append(question)
         weight_list += weights       
-        answer_list += answer
+        answer_list.append(answer)
         n.append(len(answer))
-    return torch.stack(image_list,dim=0), question_list, answer_list, torch.Tensor(weight_list), n  
+    return torch.stack(image_list,dim=0), question_list, answer_list, torch.Tensor(weight_list), n
 
 def create_dataset(num_retries=1):
     train_dataset = Activitynetqa('train', num_retries= num_retries, path_to_datadir = 'activitynet/') 
