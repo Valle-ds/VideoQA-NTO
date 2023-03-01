@@ -182,6 +182,6 @@ if __name__ == '__main__':
     Path(args.result_dir).mkdir(parents=True, exist_ok=True)
         
     yaml.dump(config, open(os.path.join(args.output_dir, 'config.yaml'), 'w'))    
-    wandb.init(config=[args, config])
+    wandb.init(config=args)
 
     main(args, config)
