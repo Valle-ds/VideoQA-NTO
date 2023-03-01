@@ -1,0 +1,18 @@
+
+# set pretrained as a file path or an url
+pretrained: True
+
+# size of vit model; base or large
+vit: 'base_8'
+batch_size_train: 16 
+batch_size_test: 32 
+init_lr: 2e-5
+
+
+k_test: 128
+inference: 'generate'
+
+# optimizer
+weight_decay: 0.05
+min_lr: 0
+max_epoch: 10
