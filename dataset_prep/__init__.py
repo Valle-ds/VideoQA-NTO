@@ -1,4 +1,4 @@
-from activitynet import Activitynetqa
+from .activitynet import Activitynetqa
 
 import torch
 from torch.utils.data import DataLoader
