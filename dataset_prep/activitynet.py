@@ -145,7 +145,6 @@ def decode(
             index = torch.clamp(index, 0, len(frames) - 1).long()
             # tmp_frames = [frames[i.item()] for i in index]
             frames = frames.get_batch(index)
-            # frames = torch.stack(tmp_frames)
     return frames
 
 
@@ -211,14 +210,13 @@ class Activitynetqa(torch.utils.data.Dataset):
             self._question = self._question *2
             self._spatial_temporal_idx.append(idx)
 
-        answer_weight = {}
+        self.answer_weight = {}
         for answer in self._labels:
-            if answer in answer_weight.keys():
-                answer_weight[answer] += 1/len(self._labels)
+            if answer in self.answer_weight.keys():
+                self.answer_weight[answer] += 1/len(self._labels)
             else:
-                answer_weight[answer] = 1/len(self._labels)
+                self.answer_weight[answer] = 1/len(self._labels)
 
-            self.weights = list(answer_weight.values())
 
 
 
@@ -312,9 +310,7 @@ class Activitynetqa(torch.utils.data.Dataset):
 
         label = self._labels[index]
         question = self._question[index]
-        weight = self.weights[index]
-        frames = utils.pack_pathway_output( frames)
-        
+        weight = [self.answer_weight[label]]
         return frames, question, label, weight
     
     def _aug_frame(
