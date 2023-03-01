@@ -114,7 +114,7 @@ def main(args, config):
                                               collate_fns=[vqa_collate_fn,None]) 
     #### Model #### 
     print("Creating model")
-    model = blip_vqa(pretrained=config['pretrained'], filenames=config['filenames'], med_config = config['med_config'], vit = config['vit'], )
+    model = blip_vqa(pretrained=args.pretrained, filenames=args.filenames, med_config = args.med_config, vit = config['vit'], )
 
     model = model.to(device)   
     
@@ -180,6 +180,8 @@ if __name__ == '__main__':
     parser.add_argument('--distributed', default=False, type=bool)
     parser.add_argument('--pretrained', default=True, type=bool)
     parser.add_argument('--num_retries', default=1, type=int)
+    parser.add_argument('--med_config', default='sberbank-ai/ruBert-base', type=str)
+
     parser.add_argument('--filenames',nargs='+',  type=list,)
     args = parser.parse_args()
 
