@@ -179,10 +179,10 @@ class BLIP_VQA(nn.Module):
         return max_ids
     
     
-def blip_vqa(pretrained='',**kwargs):
+def blip_vqa(pretrained=False, filenames=[],**kwargs):
     model = BLIP_VQA(**kwargs)
     if pretrained:
-        model, msg = load_checkpoint(model,pretrained)
+        model, msg = load_checkpoint(model,filenames=filenames)
     return model  
 
 
