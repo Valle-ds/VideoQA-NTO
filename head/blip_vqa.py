@@ -13,7 +13,8 @@ import numpy as np
 class BLIP_VQA(nn.Module):
     def __init__(self,                 
                  med_config = 'bert-base-multilingual-uncased',  
-                 vit = 'base_8',             
+                 vit = 'base_8',   
+                 freeze_vit = False          
                  ):
         """
         Args:
@@ -23,6 +24,10 @@ class BLIP_VQA(nn.Module):
         super().__init__()
         
         self.visual_encoder, vision_width = create_vit(vit, pretrained=False)
+        if freeze_vit:
+            for param in self.visual_encoder.parameters():
+                param.requires_grad = False
+
         self.vision_width = vision_width
         self.tokenizer = init_tokenizer(med_config)  
         
