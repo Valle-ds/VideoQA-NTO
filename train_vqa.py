@@ -114,7 +114,7 @@ def main(args, config):
                                               collate_fns=[vqa_collate_fn,None]) 
     #### Model #### 
     print("Creating model")
-    model = blip_vqa(pretrained=args.pretrained, filenames=args.filenames, med_config = config['med_config'], vit = config['vit'], )
+    model = blip_vqa(pretrained=config['pretrained'], filenames=config['filenames'], med_config = config['med_config'], vit = config['vit'], )
 
     model = model.to(device)   
     
@@ -179,10 +179,11 @@ if __name__ == '__main__':
     parser.add_argument('--dist_url', default='env://', help='url used to set up distributed training')
     parser.add_argument('--distributed', default=False, type=bool)
     parser.add_argument('--pretrained', default=True, type=bool)
-    parser.add_argument('--filenames', default=['/kaggle/working/models/k600_k710_uniformerv2_b16_8x224.pyth', '/kaggle/working/models/pytorch_model.bin'], type=list)
+    parser.add_argument('--filenames',nargs='+',  type=list,)
     args = parser.parse_args()
 
     config = yaml.load(open(args.config, 'r'), Loader=yaml.Loader)
+    config.pretrained = args.pretrained
     args.result_dir = os.path.join(args.output_dir, 'result')
 
     Path(args.output_dir).mkdir(parents=True, exist_ok=True)
