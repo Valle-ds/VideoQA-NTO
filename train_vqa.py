@@ -107,7 +107,7 @@ def main(args, config):
         model = torch.nn.parallel.DistributedDataParallel(model, device_ids=[args.gpu])
         model_without_ddp = model.module    
     
-    optimizer = torch.optim.AdamW(params=model.parameters(), lr=config['init_lr'], weight_decay=config['weight_decay'])
+    optimizer = torch.optim.AdamW(params=model.parameters(), lr=args.init_lr, weight_decay=config['weight_decay'])
 
     best = 0
     best_epoch = 0 
@@ -119,7 +119,7 @@ def main(args, config):
             if args.distributed:
                 train_loader.sampler.set_epoch(epoch)
                 
-            cosine_lr_schedule(optimizer, epoch, args.max_epoch, config['init_lr'], config['min_lr'])
+            cosine_lr_schedule(optimizer, epoch, args.max_epoch, args.init_lr, config['min_lr'])
                 
             train_stats = train(model, train_loader, optimizer, epoch, device) 
 
@@ -171,6 +171,7 @@ if __name__ == '__main__':
     parser.add_argument('--batch_size_train', default=8, type=int)
     parser.add_argument('--batch_size_test', default=8, type=int)
     parser.add_argument('--freeze_vit', default=False)
+    parser.add_argument('--init_lr', default=5e-3)
 
     parser.add_argument('--filenames',nargs='+')
     args = parser.parse_args()
