@@ -99,7 +99,7 @@ def main(args, config):
     
     #### Dataset #### 
     print("Creating vqa datasets")
-    datasets = create_dataset('vqa', config)   
+    datasets = create_dataset(num_retries=args.num_retries)   
     
     if args.distributed:
         num_tasks = utils.get_world_size()
@@ -179,6 +179,7 @@ if __name__ == '__main__':
     parser.add_argument('--dist_url', default='env://', help='url used to set up distributed training')
     parser.add_argument('--distributed', default=False, type=bool)
     parser.add_argument('--pretrained', default=True, type=bool)
+    parser.add_argument('--num_retries', default=1, type=int)
     parser.add_argument('--filenames',nargs='+',  type=list,)
     args = parser.parse_args()
 
