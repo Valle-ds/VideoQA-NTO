@@ -182,7 +182,33 @@ class BLIP_VQA(nn.Module):
 def blip_vqa(pretrained=False, filenames=[],**kwargs):
     model = BLIP_VQA(**kwargs)
     if pretrained:
-        model, msg = load_checkpoint(model,filenames=filenames)
+        checkpoint = torch.load(filenames[0], map_location='cpu') 
+
+        ww = {}
+        for key in checkpoint.keys():
+            ww[key.replace('backbone', 'visual_encoder')] = checkpoint[key]
+
+        model.load_state_dict(ww,strict=False)
+
+
+        checkpoint = torch.load(filenames[1], map_location='cpu') 
+
+        ww_encoder = {}
+        for key in model.state_dict().keys():
+            key = key.replace('text_encoder', 'bert')
+            if key in checkpoint.keys():
+                if 'word_embeddings' in key:
+                    del checkpoint[key]
+                else:
+                    ww_encoder[key.replace('bert', 'text_encoder')] = checkpoint[key]
+
+        model.load_state_dict(ww_encoder,strict=False)
+
+        ww_decoder = {}
+        for key in checkpoint.keys():
+            ww_decoder[key.replace('bert', 'text_decoder.bert')] = checkpoint[key]
+
+        model.load_state_dict(ww_decoder,strict=False)
     return model  
 
 
