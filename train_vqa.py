@@ -171,7 +171,7 @@ if __name__ == '__main__':
     parser.add_argument('--batch_size_train', default=8, type=int)
     parser.add_argument('--batch_size_test', default=8, type=int)
     parser.add_argument('--freeze_vit', default=False)
-    parser.add_argument('--init_lr', default=5e-3)
+    parser.add_argument('--init_lr', default=5e-3, type=float)
 
     parser.add_argument('--filenames',nargs='+')
     args = parser.parse_args()
