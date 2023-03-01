@@ -17,22 +17,19 @@ import torch.distributed as dist
 
 from head.blip_vqa import blip_vqa
 import utils
-from utils import cosine_lr_schedule, save_result
+from utils import cosine_lr_schedule, save_result, calculate_metric
 from dataset_prep import create_dataset, create_sampler, create_loader, vqa_collate_fn
-
+import wandb 
 
 def train(model, data_loader, optimizer, epoch, device):
     # train
     model.train()  
     
-    metric_logger = utils.MetricLogger(delimiter="  ")
-    metric_logger.add_meter('lr', utils.SmoothedValue(window_size=1, fmt='{value:.6f}'))
-    metric_logger.add_meter('loss', utils.SmoothedValue(window_size=1, fmt='{value:.4f}'))
 
     header = 'Train Epoch: [{}]'.format(epoch)
     print_freq = 50    
     
-    for i,(image, question, answer, weights, n) in enumerate(metric_logger.log_every(data_loader, print_freq, header)):
+    for i,(image, question, answer, weights, n) in enumerate(data_loader):
         image, weights = image.to(device,non_blocking=True), weights.to(device,non_blocking=True)      
 
         loss = model(image, question, answer, train=True, n=n, weights=weights)        
@@ -40,14 +37,11 @@ def train(model, data_loader, optimizer, epoch, device):
         optimizer.zero_grad()
         loss.backward()
         optimizer.step()    
-        
-        metric_logger.update(loss=loss.item())
-        metric_logger.update(lr=optimizer.param_groups[0]["lr"])
 
+        wandb.log({"loss": loss.item()})
+        wandb.log({'lr':optimizer.param_groups[0]["lr"]})
+        
     # gather the stats from all processes
-    metric_logger.synchronize_between_processes()
-    print("Averaged stats:", metric_logger.global_avg())     
-    return {k: "{:.3f}".format(meter.global_avg) for k, meter in metric_logger.meters.items()} 
 
 
 @torch.no_grad()
@@ -55,34 +49,23 @@ def evaluation(model, data_loader, device, config) :
     # test
     model.eval()
             
-    metric_logger = utils.MetricLogger(delimiter="  ")
     header = 'Generate VQA test result:'
     print_freq = 50
     
     result = []
-    
-    if config['inference']=='rank':   
-        answer_list = data_loader.dataset.answer_list
-        answer_candidates = model.tokenizer(answer_list, padding='longest', return_tensors='pt').to(device)    
-        answer_candidates.input_ids[:,0] = model.tokenizer.bos_token_id
-        
-    for n, (image, question, question_id) in enumerate(metric_logger.log_every(data_loader, print_freq, header)):        
+    answers = []
+
+    for i, (image, question, answer, weights, n) in enumerate(data_loader):        
         image = image.to(device,non_blocking=True)             
 
         if config['inference']=='generate':
             answers = model(image, question, train=False, inference='generate') 
-            
-            for answer, ques_id in zip(answers, question_id):
-                ques_id = int(ques_id.item())       
-                result.append({"question_id":ques_id, "answer":answer})             
-            
-        elif config['inference']=='rank':    
-            answer_ids = model(image, question, answer_candidates, train=False, inference='rank', k_test=config['k_test'])      
-
-            for ques_id, answer_id in zip(question_id, answer_ids):
-                result.append({"question_id":int(ques_id.item()), "answer":answer_list[answer_id]})   
-
-    return result
+            result.extend(answers)
+            answers.append(answer)
+    
+    metric = calculate_metric(answers, result)
+    wandb.log({"metric_val":metric})
+    return metric
 
 
 def main(args, config):
@@ -117,7 +100,8 @@ def main(args, config):
     model = blip_vqa(pretrained=args.pretrained, filenames=args.filenames, med_config = args.med_config, vit = config['vit'], )
 
     model = model.to(device)   
-    
+    wandb.watch(model, log_freq=100)
+
     model_without_ddp = model
     if args.distributed:
         model = torch.nn.parallel.DistributedDataParallel(model, device_ids=[args.gpu])
@@ -169,6 +153,8 @@ def main(args, config):
             
 
 if __name__ == '__main__':
+    wandb.login(key = '6f14de91cf14f3f40b53951e012cacd8c6e761b0')
+
     parser = argparse.ArgumentParser()
     parser.add_argument('--config', default='vqa.yaml') 
     parser.add_argument('--output_dir', default='output/VQA')
@@ -192,5 +178,6 @@ if __name__ == '__main__':
     Path(args.result_dir).mkdir(parents=True, exist_ok=True)
         
     yaml.dump(config, open(os.path.join(args.output_dir, 'config.yaml'), 'w'))    
-    
+    wandb.init(config=[args, config])
+
     main(args, config)
