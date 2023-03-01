@@ -275,65 +275,48 @@ class Activitynetqa(torch.utils.data.Dataset):
         )
         # Try to decode and sample a clip from a video. If the video can not be
         # decoded, repeatly find a random video replacement that can be decoded.
-        for i_try in range(self._num_retries):
-            video_container = None
-            try:
-                video_container = get_video_container(
-                    self._path_to_videos[index] + '.mp4',
-                    'decord',
-                )
-            except Exception as e:
-                print('bad')
-            # Select a random video if the current video was not able to access.
-            if video_container is None:
-                
-                if self.mode not in ["test"] and i_try > self._num_retries // 2:
-                    # let's try another one
-                    index = random.randint(0, len(self._path_to_videos) - 1)
-                continue
-            
-            frames = decode(
-                video_container,
-                sampling_rate,
-                8,
-                temporal_sample_index,
-                1,
-                backend='decord',
-                max_spatial_scale=min_scale,
-                use_offset=True,
+
+        video_container = None
+        try:
+            video_container = get_video_container(
+                self._path_to_videos[index] + '.mp4',
+                'decord',
+            )
+        except Exception as e:
+            print('bad')
+        # Select a random video if the current video was not able to access. 
+        
+        frames = decode(
+            video_container,
+            sampling_rate,
+            8,
+            temporal_sample_index,
+            1,
+            backend='decord',
+            max_spatial_scale=min_scale,
+            use_offset=True,
+        )
+
+        # If decoding failed (wrong format, video is too short, and etc),
+        # select another video.
+
+        if self.aug:
+            frames = self._aug_frame(
+                frames,
+                spatial_sample_index,
+                min_scale,
+                max_scale,
+                crop_size,
             )
 
-            # If decoding failed (wrong format, video is too short, and etc),
-            # select another video.
-            if frames is None:
-                
-                if self.mode not in ["test"] and i_try > self._num_retries // 2:
-                    # let's try another one
-                    index = random.randint(0, len(self._path_to_videos) - 1)
-                continue
 
-            if self.aug:
-                frames = self._aug_frame(
-                    frames,
-                    spatial_sample_index,
-                    min_scale,
-                    max_scale,
-                    crop_size,
-                )
-
-
-            label = self._labels[index]
-            question = self._question[index]
-            weight = self.weights[index]
-            frames = utils.pack_pathway_output( frames)
-            return frames, question, label, weight
-        else:
-            raise RuntimeError(
-                "Failed to fetch video after {} retries.".format(
-                    self._num_retries
-                )
-            )
-
+        label = self._labels[index]
+        question = self._question[index]
+        weight = self.weights[index]
+        frames = utils.pack_pathway_output( frames)
+        
+        return frames, question, label, weight
+    
     def _aug_frame(
         self,
         frames,
