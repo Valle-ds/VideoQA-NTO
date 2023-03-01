@@ -172,7 +172,7 @@ if __name__ == '__main__':
     parser.add_argument('--batch_size_test', default=8, type=int)
     parser.add_argument('--freeze_vit', default=False)
 
-    parser.add_argument('--filenames',nargs='+',  type=list,)
+    parser.add_argument('--filenames',nargs='+')
     args = parser.parse_args()
 
     config = yaml.load(open(args.config, 'r'), Loader=yaml.Loader)
