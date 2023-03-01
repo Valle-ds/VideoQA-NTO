@@ -23,7 +23,8 @@ import os
 import time
 from collections import defaultdict, deque
 import datetime
-
+import pandas as pd
+import nltk
 import torch
 import torch.distributed as dist
 import json
@@ -306,3 +307,13 @@ def init_distributed_mode(args):
                                          world_size=args.world_size, rank=args.rank)
     torch.distributed.barrier()
     setup_for_distributed(args.rank == 0)     
+
+def calculate_metric(answers, predicts):
+
+    scores = []
+    for pred, gt in zip(answers, predicts):
+        if type(pred)==str and type(gt)==str:
+            score = nltk.translate.bleu_score.sentence_bleu([gt.lower().split()], pred.lower().replace('<|endoftext|>','').split(), weights = (0.5, 0.5))
+        scores+=[score]
+    ans = np.array(scores).mean()*100
+    return ans
