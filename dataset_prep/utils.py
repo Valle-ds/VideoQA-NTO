@@ -70,7 +70,7 @@ def get_sequence(center_idx, half_len, sample_rate, num_frames):
     return seq
 
 
-def pack_pathway_output(cfg, frames):
+def pack_pathway_output(frames):
     """
     Prepare output as a list of tensors. Each tensor corresponding to a
     unique pathway.

@@ -207,7 +207,7 @@ class Activitynetqa(torch.utils.data.Dataset):
         self._labels = df['answer'].to_list()
         self._question = df['question'].to_list()
 
-        for idx in range(self.num_retries - 1):
+        for idx in range(self._num_retries - 1):
             self._path_to_videos = self._path_to_videos *2
             self._labels = self._labels *2
             self._question = self._question *2
