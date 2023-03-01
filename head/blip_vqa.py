@@ -92,7 +92,7 @@ class BLIP_VQA(nn.Module):
                                               reduction = 'none',
                                              )      
             
-            loss = weights * answer_output.loss
+            loss = answer_output.loss
             loss = loss.sum()/video.size(0)
 
             return loss
