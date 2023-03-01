@@ -97,7 +97,7 @@ def main(args, config):
                                               collate_fns=[vqa_collate_fn,None]) 
     #### Model #### 
     print("Creating model")
-    model = blip_vqa(pretrained=args.pretrained, filenames=args.filenames, med_config = args.med_config, vit = config['vit'], )
+    model = blip_vqa(pretrained=args.pretrained, filenames=args.filenames, med_config = args.med_config, vit = config['vit'], freeze_vit =args.freeze_vit)
 
     model = model.to(device)   
     wandb.watch(model, log_freq=100)
@@ -170,6 +170,8 @@ if __name__ == '__main__':
     parser.add_argument('--max_epoch', default=5, type=int)
     parser.add_argument('--batch_size_train', default=8, type=int)
     parser.add_argument('--batch_size_test', default=8, type=int)
+    parser.add_argument('--freeze_vit', default=False)
+
     parser.add_argument('--filenames',nargs='+',  type=list,)
     args = parser.parse_args()
 
