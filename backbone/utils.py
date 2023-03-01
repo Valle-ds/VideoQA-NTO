@@ -89,23 +89,32 @@ def is_url(url_or_filename):
     parsed = urlparse(url_or_filename)
     return parsed.scheme in ("http", "https")
 
-def load_checkpoint(model,url_or_filename):
-    if is_url(url_or_filename):
-        cached_file = download_cached_file(url_or_filename, check_hash=False, progress=True)
-        checkpoint = torch.load(cached_file, map_location='cpu') 
-    elif os.path.isfile(url_or_filename):        
-        checkpoint = torch.load(url_or_filename, map_location='cpu') 
-    else:
-        raise RuntimeError('checkpoint url or path is invalid')
-        
-    state_dict = checkpoint['model']
+def load_checkpoint(model,filenames=['/kaggle/working/models/k600_k710_uniformerv2_b16_8x224.pyth', '/kaggle/working/models/pytorch_model.bin']):
+    checkpoint = torch.load(filenames[0], map_location='cpu') 
+
+    ww = {}
+    for key in checkpoint.keys():
+        ww[key.replace('backbone', 'visual_encoder')] = checkpoint[key]
+
+    model.load_state_dict(ww,strict=False)
 
 
+    checkpoint = torch.load(filenames[1], map_location='cpu') 
+
+    ww_encoder = {}
     for key in model.state_dict().keys():
-        if key in state_dict.keys():
-            if state_dict[key].shape!=model.state_dict()[key].shape:
-                del state_dict[key]
-    
-    msg = model.load_state_dict(state_dict,strict=False)
-    print('load checkpoint from %s'%url_or_filename)  
-    return model, msg
+        key = key.replace('text_encoder', 'bert')
+        if key in checkpoint.keys():
+            if 'word_embeddings' in key:
+                del checkpoint[key]
+            else:
+                ww_encoder[key.replace('bert', 'text_encoder')] = checkpoint[key]
+
+    model.load_state_dict(ww_encoder,strict=False)
+
+    ww_decoder = {}
+    for key in checkpoint.keys():
+        ww_decoder[key.replace('bert', 'text_decoder.bert')] = checkpoint[key]
+
+    model.load_state_dict(ww_decoder,strict=False)
+    return model
